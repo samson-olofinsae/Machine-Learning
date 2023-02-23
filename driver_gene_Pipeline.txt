@@ -1,0 +1,300 @@
+    1	#!/bin/bash --login
+     2	#$ -cwd
+     3	#$ -pe smp.pe 4
+     4	#$ -t 1-n   # specify your sample number (n)
+       
+     5	#specify parameter for array job
+       
+     6	x="${SGE_TASK_ID}p"
+       
+     7	#load the essential R and Python packages
+       
+     8	module load apps/gcc/R/4.1.2
+     9	module load apps/python/2.7.15/gcc-4.8.5
+    10	module load libs/pandas/0.17.0
+    11	module load libs/numpy/1.10.4
+    12	module load apps/gcc/R/4.1.2
+    13	library (tidyverse)
+    14	library (dplyr)
+    15	library (readr)
+       
+    16	# step1 : dndscv combines indel and snv VCF files; move indels and SNVs files from CSF3 shared folder to different working folders
+       
+    17	#set path for your working directory : dndscv_work
+       
+    18	cd /path for your working directory
+       
+    19	mkdir indel_folder snv_folder
+       
+    20	#copies indel VCF files to indel_folder
+       
+    21	cd /path to indels directory
+    22	cp * /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work/indel_folder
+       
+    23	#copies SNVs VCF files to snv_folder
+    24	cd /mnt/bmh01-rds/UoOxford_David_W/shared/PPCG_Data_Release/Somatic_variants/SNVs/Filtered_SNV_VCFs_20_April_2021
+    25	cp * /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work/snv_folder
+       
+    26	cd /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work
+       
+       
+       
+    27	# create folders for dNdScv input and output files
+       
+    28	mkdir Input_dNdScv Output_dNdScv
+       
+    29	# step2 : Generate mutation table from indel file - sample (n)_indel.vcf.gz files from VCF files  (n = numerical samples number)
+    30	cd /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/utility_codes/indel_folder/
+       
+    31	COUNTER=0
+    32	for file in *_Tier_3.vcf.gz
+       
+    33	do
+    34	  let COUNTER=COUNTER+1
+    35	  echo $file $COUNTER
+    36	  cp $file sample${COUNTER}_indel.vcf.gz
+    37	done
+       
+    38	#generates .txt files (indel_vcf_list.txt and sample_list.txt files) as inputs for array job
+       
+    39	for file in *_indel.vcf.gz; do  echo $file >> indel_vcf_list.txt; done
+    40	for file in *_indel.vcf.gz
+    41	do sample=`echo $file | cut -d '_' -f 1`
+    42	echo ${sample}_final_indel >> sample_indel_list.txt
+    43	done
+       
+       
+    44	#runs array job on indel_vcf_list.txt and sample_indel_list.txt to produce input files that generate indel_dNdScv mutation table
+       
+    45	vcf_files_pro=`sed -n $x indel_vcf_list.txt`
+    46	finalindel=`sed -n $x sample_indel_list.txt`
+    47	sampleId=`echo $vcf_files_pro | cut -d '_' -f 1`
+    48	zcat $vcf_files_pro | grep -v "##" | awk '{gsub (/#/,"")}1' | awk -v ID="${sampleId^}" 'NR==1{print "SampleID", $1, $2, $4, $5; next}{print ID, $1, $2, $4, $5}' | tail -n +2 > $finalindel
+    49	#concatenates all *_final_indel files into a "combined.txt" file and attach the dndscv headers to generate the dndscv mutation table
+    50	for file in **_final_indel ; do cat $file >> combined.txt ; done
+    51	awk 'BEGIN {print "SampleID chr pos ref mut"}{print $0}' combined.txt  > dndscv_indel_mutation.txt
+       
+    52	#move the dndscv indel mutation table to work directory
+       
+    53	mv dndscv_indel_mutation.txt /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work
+       
+       
+    54	#step3 : repeats step2 (for SNVs VCF files)
+       
+    55	# Generate mutation table from snv file - sample (n)_.pon.vcf.gz files from VCF files  (n = numerical samples number)
+    56	cd /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work/snv_folder/
+       
+    57	COUNTER=0
+    58	for file in *.pon.vcf.gz
+       
+    59	do
+    60	  let COUNTER=COUNTER+1
+    61	  echo $file $COUNTER
+    62	  cp $file sample${COUNTER}_pon.vcf.gz
+    63	done
+       
+    64	#generates .txt files (snv_vcf_list.txt and sample_list.txt files) as inputs for array job
+       
+    65	for file in *_.pon.vcf.gz; do  echo $file >> snv_vcf_list.txt; done
+    66	for file in *_.pon.vcf.gz
+    67	do sample=`echo $file | cut -d '_' -f 1`
+    68	echo ${sample}_final_indel >> sample_snv_list.txt
+    69	done
+       
+    70	#runs array job on snv_cf_list.txt and sample_snv_list.txt to produce input files that generate dNdScv mutation table
+       
+    71	vcf_files_pro=`sed -n $x snv_vcf_list.txt`
+    72	finalsnv=`sed -n $x sample_snv_list.txt`
+    73	sampleId=`echo $vcf_files_pro | cut -d '_' -f 1`
+    74	zcat $vcf_files_pro | grep -v "##" | awk '{gsub (/#/,"")}1' | awk -v ID="${sampleId^}" 'NR==1{print "SampleID", $1, $2, $4, $5; next}{print ID, $1, $2, $4, $5}' | tail -n +2 > $finalsnv
+    75	#concatenates all *_final_snv files into a "combined.txt" file and attach the dndscv headers to generate the dndscv mutation table
+    76	for file in **_final_indel ; do cat $file >> combined.txt ; done
+    77	awk 'BEGIN {print "SampleID chr pos ref mut"}{print $0}' combined.txt  > dndscv_indel_mutation.txt
+       
+    78	mv dndscv_indel_mutation.txt /mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/dndscv_work
+       
+    79	#concatenate both indel and snv mutation tables to generate a "dndscv_mutation.txt" file as input for dndscv run
+       
+    80	cat dndscv_snv_mutation.txt dndscv_inde_mutation > dndscv_mutation.txt
+       
+    81	#step4 : generates a "dNdScv_script.R" script to run the programme (with "dndscv_mutation.txt" embedded as input file)
+       
+    82	echo -e "library (dndscv)\nm = read.table("/mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/utility_codes/test/test2/dNdScv_output/dndscv_mutation.txt", header=1, stringsAsFactors = F)\ndndsout = dndscv(m)\nsel_cv = dndsout$sel_cv\nprint(sel_cv)\nsignif_genes = sel_cv[sel_cv$qglobal_cv<0.1, c("gene_name","qglobal_cv")]\nrownames(signif_genes) = NULL\nprint(signif_genes)\nprint(dndsout$globaldnds)\nprint(dndsout$annotmuts)\nprint(dndsout$nbreg$theta)\nsignif_genes_localmodel = as.vector(dndsout$sel_loc$gene_name[dndsout$sel_loc$qall_loc<0.1])\nprint(signif_genes_localmodel)" >> dNdScv_script.R
+       
+       
+    83	#step5 : runs the dNdScv algorithm (the generated "dNdScv_script.R" is embedded as the run script!). 
+       
+       
+       
+    84	R CMD BATCH dNdScv.script.R
+    85	./dNdScv_script.R
+       
+       
+    86	#step 6 : save the dndscv R object dndsout$anntmus generated as a .csv file and read it into R (dndsout$anntmus output contains the driver annotations)
+       
+       
+    87	write.table (dndsout$anntmus, file = "dndscvfile.csv", row.names = F, sep = "")
+       
+    88	dndscv_drivers <- read_csv ("dndscvfile.csv", TRUE, "")
+       
+    89	#step 7 : separately extract both indel and snv drivers from the generated .csv file (remove comment tabs from the analysis you want to run !)
+       
+    90	# to extract indel drivers from dndscv output 
+       
+    91	#indel_drivers <- dndscv_drivers %>%
+    92	#filter (grepl ("(^AA)|(^AT)|(^AC)|(^AG)|(^TA)|(^TT)|(^TC)|(^TG)|(^GA)|(^GT)|(^GC)|(^GG)|(^CA)|(^CT)|(^CC)|(^CG), ref | grepl ("(^AA)|(^AT)|(^AC)|(^AG)|(^TA)|(^TT)|(^TC)|(^TG)|(^GA)|(^GT)|(^GC)|(^GG)|(^CA)|(^CT)|(^CC)|(^CG)", mut))
+    93	# save indel drivers output 
+    94	# write.table(indel_drivers, file = "dnds_indel.csv", row.names = F, sep = ",")
+       
+    95	# to extract snv drivers from dndscv output
+       
+    96	# snv_drivers <- dndscv_drivers %>%
+    97	#filter (grepl ("A|T|C|G", ref | grepl ("A|T|C|G", mut)
+    98	# save drivers output 
+    99	# write.table(snv_drivers, file = "dnds_snv.csv", row.names = F, sep = ",")
+       
+       
+   100	#step 7 : Clonality assignment - generate the python scripts for running indel and snv drivers-clonality assignment - this has to be run separately !
+       
+   101	echo "import pandas as pd
+   102	import glob
+   103	import os
+   104	import pandas as pd
+   105	import numpy as np
+       
+   106	# depending on running indel or snv drivers, use the path to the indel or snv dpclust output, respectively. (Output_all_regions_no_XY_SNVs)
+   107	#to run dndscv snv, for instance , specify the path to get dpclust output for snv  
+       
+   108	dpoutput="/mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_run_snv/Output_all_regions_no_XY_SNVs/dpcluster_snv"
+   109	dndscvfile="/mnt/bmh01-rds/UoOxford_David_W/shared/Samson_project/Mutant_Wild_data/ssDPC_from_VCFs/utility_codes/test/test2/dNdScv_output/dnds_snv.csv"
+   110	#dndscvfile="exp.csv"
+       
+       
+   111	#get sample ids
+       
+   112	df=pd.read_csv(dndscvfile)
+       
+   113	allsamples=df['SampleID'].values
+       
+   114	path_dict={}
+   115	allsamplefolders=glob.glob('%s/*'%dpoutput)
+   116	allinfo=[]
+   117	errors=[]
+   118	for folder in allsamplefolders:
+       
+   119	    try:
+   120	        name1=os.path.split(folder)[-1].split('_')[0]
+   121	        name2=os.path.split(folder)[-1].split('_')[1]
+   122	        print(name1)
+   123	        print(name2)
+   124	        #path_dict[name]=folder
+   125	    except:
+   126	        errors.append('%s-output files do not exist'%folder)
+   127	        print('output file not not exist:%s',folder)
+   128	        continue
+       
+       
+       
+       
+   129	    DBCLUST_CLONALITY_FILE="%s/%s_%s_2000iters_1000burnin_bestClusterInfo.txt"%(folder,name1,name2)
+   130	    DPCLUST_VARIANT_FILE = "%s/%s_%s_2000iters_1000burnin_bestConsensusAssignments.bed"%(folder,name1,name2)
+       
+   131	    try:
+   132	        clusterdf=pd.read_csv(DPCLUST_VARIANT_FILE,sep='\t')
+   133	        clonalitydf=pd.read_csv(DBCLUST_CLONALITY_FILE,sep='\t')
+   134	    except:
+   135	        errors.append('%s-output files do not exist'%name)
+   136	        print('output file not not exist:%s',name)
+   137	        continue
+       
+       
+   138	    info=df[df['SampleID']==name1].values[0]
+   139	    subset=df[df['SampleID']==name1]
+   140	    for info in subset.values:
+   141	        chr_,pos=info[1],info[2]
+   142	        start=pos-1
+   143	        end=pos
+   144	        print(chr_,start,end)
+       
+   145	        #search for assigned cluster
+       
+   146	        try:
+   147	            clusterval=clusterdf[ (clusterdf['chr']==chr_) & (clusterdf['start']==start) & (clusterdf['end']==end)].values[0][3]
+       
+   148	            print(clusterval)
+       
+   149	            clonality_value=clonalitydf[clonalitydf['cluster.no']==clusterval]['location'].values[0]
+   150	            no_of_mutations=clonalitydf[clonalitydf['cluster.no']==clusterval]['no.of.mutations'].values[0]
+   151	            print(clonality_value)
+   152	        except:
+   153	            errors.append('%s-%s-%s'%(name1,chr_,'chr or clonality information not found in bestClusterInfo.txt'))
+   154	            items=[name1,chr_,pos,'none','none','none','none','none','none']
+   155	            items=np.append(info,items,axis=0)
+   156	            allinfo.append(items)
+       
+   157	            continue
+       
+       
+   158	    #if clonality_value>1.05:
+   159	    #    clonality_label='superclonal'
+   160	        if clonality_value<0.95:
+   161	            clonality_label='subclonal'
+   162	        elif clonality_value >=0.95 and clonality_value <=1.05:
+   163	            clonality_label='clonal'
+   164	        elif clonality_value>1.05:
+   165	            clonality_label='superclonal'
+   166	    #gggg
+   167	        items=np.append(info,[name1,chr_,pos,start,end,clusterval,clonality_value,clonality_label,no_of_mutations],axis=0)
+   168	        allinfo.append(items)
+   169	        print(info)
+   170	        print([name1,chr_,pos,start,end,clusterval,clonality_value,clonality_label])
+   171	        print(items)
+       
+       
+       
+   172	cols=df.columns
+   173	newcols=np.append(cols,['SampleID','CHR','POS','START','END','CLUSTER','CLONALITY_SCORE','CLONALITY_LABEL','NO.OF.MUTATIONS'],axis=0)
+   174	newdf=pd.DataFrame(allinfo,columns=newcols)
+   175	newdf.to_csv('final.csv',index=False)
+       
+   176	#final.csv is the output file for the python run
+       
+       
+   177	with open('errors.txt','w') as errorout:
+   178	    errorout.write('\n'.join(errors)) " > dNdScv.py
+       
+       
+       
+   179	#- runs the dNdScv.py script (note that this contains either indel clonality assignment or snv clonalitiy assignment based on your choice !)
+   180	./python3 dNdScv.py
+   181	 
+       
+   182	#step8 : generates dNdScv annotation R Plots
+       
+       
+   183	library(tidyverse)
+       
+   184	Drivers_gene <- read_csv("final.csv", TRUE, "")
+       
+   185	# - Clonality plot for annotated driver genes
+       
+   186	Clonality_data <- Drivers_gene %>%
+       
+   187	select (Sign_genes, CLONALITY_LABEL)
+       
+   188	jpeg("clonality.jpeg")
+       
+   189	ggplot(Clonality_data,aes(x = Sign_genes, fill = CLONALITY_LABEL)) + geom_bar()  + coord_flip()
+       
+   190	dev.off()
+       
+   191	#- functional impact plot for annotated driver genes
+   192	select (Sign_genes, CLONALITY_LABEL)
+       
+   193	jpeg("impact.jpeg")
+       
+   194	ggplot(Clonality_data,aes(x = Sign_genes, fill = impact)) + geom_bar()  + coord_flip()
+       
+   195	dev.off()
+       
+   196	# programme exited
