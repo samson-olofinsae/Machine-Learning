@@ -1,1 +1,104 @@
+# code written on Google Colab notebook
+#STAGE1 : Install the neccesary packages and load the libraries
+
+# install the chembl_websource_client (allows to download the bioactivity data directly from Chembl)
+! pip install chembl_webresource_client
+# import the python libraries
+import pandas as pd
+from chembl_webresource_client.new_client import new_client
+from google.colab import drive
+
+#STAGE2: Search for Target protein ('TARG')
+
+
+# download the Bioactivity data for RIPK2 (Target 'TARG') (or a protein implicated in disease progression)
+target = new_client.target
+target_query = target.search('TARG')
+targets = pd.DataFrame.from_dict(target_query)
+targets
+# selecting the target hit for SINGLE PROTEIN for further investigation (identified by the row) Other entries are microbes (index number of 4 (row 4), not including the title)
+
+selected_target = targets.target_chembl_id[4]
+#display the id of the target protein
+selected_target
+
+# filter the target by standard type value of IC50 (Minimum inhibitory concentration of half the conc)
+activity = new_client.activity
+res = activity.filter(target_chembl_id=selected_target).filter(standard_type="IC50")
+df = pd.DataFrame.from_dict(res)
+# filtering the first 3 rows
+df.head(3)
+# If the IC50 columns has duplicated values, you might want to filter the unique value in the above IC50
+df.standard_type.unique()
+
+#STAGE3: Save the resulting bioactivity data to a CSV file bioactivity_data.csv. (index=False as we dont't want the index number to be in the resulting CSV file)
+
+df.to_csv('bioactivity_data.csv', index=False)
+# we need to mount the Google Drive into Colab so that we can have access to our Google drive from within Colab
+drive.mount('/content/gdrive', force_remount=True)
+# Create a data folder in the Mounted Google Drive
+! mkdir "/content/gdrive/My Drive/Colab Notebooks/data"
+# copy the bioactivity csv file in into the created data folder
+! cp bioactivity_data.csv "/content/gdrive/My Drive/Colab Notebooks/data"
+# inspect the directory
+! ls - l "/content/gdrive/My Drive/Colab Notebooks/data"
+! ls
+# inspect the head of the csv file
+! head bioactivity_data.csv
+
+#STAGE4 : Data prunning
+
+# removing records with missing values (if any) in the standard_value column
+# remving compounds with  missing values in the standard_value column and drop it
+df2 = df[df.standard_value.notna()]
+df2
+
+# STAGE5: Data preprocessing
+# classify compoound as active (IC50 < 1nM or 1000mM), inactive (IC50 > 10nM or 10000uM), and between 1 and 10nM as intermediate
+bioactivity_class = []
+for i in df2.standard_value:
+    if float(i) >= 10000:
+        bioactivity_class.append("innactive")
+    elif float(i) <= 1000:
+        bioactivity_class.append("active")
+    else:
+        bioactivity_class.append("intermediate")
+# iterate over the molecule_chembl_id column as a list ; this also picks only one value in case of duplicated value
+#the molecule_chembl_id values can be viewed with the code df2.molecule_chembl_id:
+
+mol_cid = []
+for i in df2.molecule_chembl_id:
+    mol_cid.append(i)
+# run mol_cid
+
+# iterate over canonical_smiles to a list
+
+canonical_smiles = []
+for i in df2.canonical_smiles:
+    canonical_smiles.append(i)
+#run canonical_smiles
+
+# iterate over the standard_value to a list
+standard_value = []
+for i in df2.standard_value:
+    standard_value.append(i)
+
+#STAGE6: Generate the preproccesed data by combining the 4 lists into a dataframe
+
+data_tuples = list(zip(mol_cid, canonical_smiles, bioactivity_class, standard_value))
+df3 = pd.DataFrame(data_tuples, columns=['molecule_chembl_id', 'canonical_smiles', 'bioactivity_class', 'standard_value'])
+df3
+
+# save the pre-processed bioactivity data as csv file
+df3.to_csv('bioactivity_preprocessed_data.csv', index=False)
+
+# inspect the content of the directory
+! ls - l
+
+# copy the pre-processed file into Google Drive
+! cp bioactivity_preprocessed_data.csv "/content/gdrive/My Drive/Colab Notebooks/data"
+
+# inspect the content of the directory
+
+! ls "/content/gdrive/My Drive/Colab Notebooks/data"
 
