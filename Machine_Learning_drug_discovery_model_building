@@ -1,0 +1,60 @@
+# Building a Regression module with the Random Forest algorithm
+# import the library
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.feature_selection import VarianceThreshold
+import pandas as pd
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+
+# load the dataset generated from Script 3
+! wget https: // github.com/dataprofessor/data/raw/master/acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv
+
+
+
+df = pd.read_csv(
+    'acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv')
+# imputing the features
+# step1: Generate the X value -  drop the pIC50 in order to create the X variable matrix. We now have only the PubChem Fingerprint for the X variable
+X = df.drop('pIC50', axis=1)
+X
+# step2: Generate the Y value, which is the pIC50 value
+Y = df.pIC50
+Y
+# step3: Examine the dimension of the data
+X.shape
+Y.shape
+# step4: Remove low variance features
+selection = VarianceThreshold(threshold=(.8 * (1 - .8)))
+X = selection.fit_transform(X)
+
+X.shape
+
+# Data split (80/20 ration)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+# inpsect the data dimensions
+X_train.shape, Y_train.shape
+X_test.shape, Y_test.shape
+
+# STAGE5: Building a Regression Model using Random Forest
+np.random.seed(100)
+model = RandomForestRegressor(n_estimators=100)
+model.fit(X_train, Y_train)
+r2 = model.score(X_test, Y_test)
+r2
+
+Y_pred = model.predict(X_test)
+
+# STAGE6: Scatter Plot of Experimental vs Predicted pIC50 Values
+
+sns.set(color_codes=True)
+sns.set_style("white")
+
+ax = sns.regplot(Y_test, Y_pred, scatter_kws={'alpha': 0.4})
+ax.set_xlabel('Experimental pIC50', fontsize='large', fontweight='bold')
+ax.set_ylabel('Predicted pIC50', fontsize='large', fontweight='bold')
+ax.set_xlim(0, 12)
+ax.set_ylim(0, 12)
+ax.figure.set_size_inches(5, 5)
+plt.show
