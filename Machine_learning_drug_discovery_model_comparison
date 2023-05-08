@@ -1,0 +1,67 @@
+# STAGE1: Import library
+import matplotlib.pyplot as plt
+from sklearn.feature_selection import VarianceThreshold
+import pandas as pd
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+import lazypredict
+from lazypredict.Supervised import LazyRegressor
+! pip install lazypredict
+
+# STAGE2: Load the dataset
+
+! wget https: // github.com/dataprofessor/data/raw/masterraw.githubusercontent.com/samson-olofinsae/Mars/main/acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv
+
+df = pd.read_csv('acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv')
+# Split data into X and Y variables
+X = df.drop('pIC50', axis=1)
+Y = df.pIC50
+
+# STAGE3: Data preprocessing
+
+# Examine X dimension
+X.shape
+# Remove low variance features
+selection = VarianceThreshold(threshold=(.8 * (1 - .8)))
+X = selection.fit_transform(X)
+X.shape
+
+# Perform data splitting using 80/20 ratio
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=42)
+
+# STAGE4: Compare ML algorithms
+# Defines and builds the lazyclassifier
+clf = LazyRegressor(verbose=0, ignore_warnings=True, custom_metric=None)
+train, test = clf.fit(X_train, X_test, Y_train, Y_test)
+
+# Performance table of the training set (80% subset)
+train
+# Performance table of the test set (20% subset)
+test
+
+# STAGE5: Data visualisation of model performance
+
+# Bar plot of R-squared values
+
+
+# train["R-Squared"] = [0 if i < 0 else i for i in train.iloc[:,0] ]
+
+plt.figure(figsize=(5, 10))
+sns.set_theme(style="whitegrid")
+ax = sns.barplot(y=train.index, x="R-Squared", data=train)
+ax.set(xlim=(0, 1))
+
+# Bar plot of RMSE values
+
+plt.figure(figsize=(5, 10))
+sns.set_theme(style="whitegrid")
+ax = sns.barplot(y=train.index, x="RMSE", data=train)
+ax.set(xlim=(0, 10))
+
+# Bar plot of calculation time
+
+plt.figure(figsize=(5, 10))
+sns.set_theme(style="whitegrid")
+ax = sns.barplot(y=train.index, x="Time Taken", data=train)
+ax.set(xlim=(0, 10))
