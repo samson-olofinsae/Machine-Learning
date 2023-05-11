@@ -1,1 +1,192 @@
+Python Libraries required: 
+numpy
+matplotlib
+pandas
+tensorflow
+keras
+scikit-learn
 
+STAGE1: Load the libraries for each stage of the analysis - data handling, data visualisation, data processing, data classification
+
+#data handling
+import pandas as pd
+import numpy as np
+
+#FOR data visualization
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#FOR preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
+
+#FOR classification
+import tensorflow as tf
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense
+
+STAGE2: import data as a df from data repository
+dataframe=pd.read_csv('path/to/cancer_file.csv')
+#if input file is in a github repo 
+#clone repo url into your working environment and save file in your working environment
+#git clone URL/of/git/to/file
+#dataframe=pd.read_csv('cancer_fiel.csv')
+
+STAGE3: Data Cleaning and EDA (exploratory data analysis)
+#let's check the number of samples and features
+#note:the last column contain the labels. it is not considered as a feature
+print(dataframe.shape)
+
+#Inspect the range of columns with: print(dataframe.columns[0:n]), is the upper range number. TO inspect the first 3 columns; 
+print(dataframe.columns[0:3])
+
+#To insepct the name of the last column
+
+dataframe.columns[-1]
+
+#To inspect if there are missing values in the dataframe:
+datanul=dataframe.isnull().sum()
+g=[i for i in datanul if i>0]
+
+print('columns with missing values:%d'%len(g))
+
+#To inspect how many data types are present in the dataframe - cancer types are tagged as classes or labels
+
+
+print(dataframe['Cancer_Type'].value_counts())
+
+#plot a bar chat to display the class distribution
+
+dataframe['Cancer_Type'].value_counts().plot.bar()
+
+STAGE4: Data preprocesing
+#Separate the feature values from the class. This is necceary because scikit-learn requires that features and class are separated before parsing them to the classifiers.
+
+X=dataframe.iloc[:,0:-1]
+y=dataframe.iloc[:,-1]
+
+X.shape
+y.shape
+
+STAGE4: label encoding (transforming categorical values to numerical)
+#let's encode target labels (y) with values between 0 and n_classes-1.
+#encoding will be done using the LabelEncoder
+label_encoder=LabelEncoder()
+label_encoder.fit(y)
+y_encoded=label_encoder.transform(y)
+labels=label_encoder.classes_
+classes=np.unique(y_encoded)
+
+labels
+classes
+
+#STAGE5: data spliting (split data into tarining and testing parts)
+
+#split data into training and test sets
+X_train,X_test,y_train,y_test=train_test_split(X,y_encoded,test_size=0.2,random_state=42)
+
+dataframe.iloc[:,0:10].describe()
+
+#STAGE6: Data Normalization
+# scale data between 0 and 1
+
+min_max_scaler=MinMaxScaler()
+X_train_norm=min_max_scaler.fit_transform(X_train)
+X_test_norm=min_max_scaler.fit_transform(X_test)
+
+#STAGE7: Feature Selection
+
+MI=mutual_info_classif(X_train_norm,y_train)
+#select top n features. lets say 300.
+#The values can be modified to assess how the performance of the model changes
+
+n_features=300
+selected_scores_indices=np.argsort(MI)[::-1][0:n_features]
+X_train_selected=X_train_norm[:,selected_scores_indices]
+X_test_selected=X_test_norm[:,selected_scores_indices]
+X_train_selected.shape
+X_test_selected.shape
+
+#STAGE8: Model Training with Randdom Forest Classifier
+#Random Forest Classifier
+#Usually for multiclass data,as it is in this cae, the "one-versus-rest" approach is used.
+#learn to predict each class against the other.
+
+#- model training
+RF=OneVsRestClassifier(RandomForestClassifier(max_features=0.2))
+RF.fit(X_train_selected,y_train)
+y_pred =RF.predict(X_test_selected)
+pred_prob = RF.predict_proba(X_test_selected)
+
+#STAGE8: Determing the parameter to use to evaluate the model performance. Depending on project, this could be accuracy, precision, recall, fi score, confusion matrix and ROC Curve
+
+#accuracy
+accuracy=np.round(balanced_accuracy_score(y_test,y_pred),4)
+print('accuracy:%0.4f'%accuracy)
+
+#precision
+precision=np.round(precision_score(y_test,y_pred,average = 'weighted'),4)
+print('precision:%0.4f'%precision)
+
+#recall
+recall=np.round(recall_score(y_test,y_pred,average = 'weighted'),4)
+print('recall:%0.4f'%recall)
+
+#f1score
+f1score=np.round(f1_score(y_test,y_pred,average = 'weighted'),4)
+print('f1score:%0.4f'%f1score)
+
+
+report=classification_report(y_test,y_pred, target_names=labels)
+print('\n')
+print('classification report\n\n')
+print(report)
+
+#generate confusion matrix
+cm=confusion_matrix(y_test,y_pred)
+cm_df=pd.DataFrame(cm,index=labels,columns=labels)
+
+cd_df
+
+#visualize the confusion matrix using seaborn
+
+sns.heatmap(cm_df,annot=True,cmap='Blues')
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+
+#visualize the confusion matrix directly
+disp=plot_confusion_matrix(RF,X_test_selected,y_test,xticks_rotation='vertical',
+                     cmap='Blues',display_labels=labels)
+                     
+#roc curves will be generated for each class
+#we will therefore have to binarize the y_test labels
+#this is done because the probabilities(pred_prob) are calculated for each each class
+#we therefore need to put the y_test label in the same format as the pred_prob
+y_test_binarized=label_binarize(y_test,classes=classes)
+
+# roc curve for classes
+fpr = {}
+tpr = {}
+thresh ={}
+roc_auc = dict()
+
+n_class = classes.shape[0]
+
+for i in range(n_class):    
+    fpr[i], tpr[i], thresh[i] = roc_curve(y_test_binarized[:,i], pred_prob[:,i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+    
+    # plotting    
+    plt.plot(fpr[i], tpr[i], linestyle='--', 
+             label='%s vs Rest (AUC=%0.2f)'%(labels[i],roc_auc[i]))
+
+plt.plot([0,1],[0,1],'b--')
+plt.xlim([0,1])
+plt.ylim([0,1.05])
+plt.title('Multiclass ROC curve')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive rate')
+plt.legend(loc='lower right')
+plt.show() 
