@@ -64,6 +64,9 @@ dataframe['Cancer_Type'].value_counts().plot.bar()
 STAGE4: Data preprocesing
 #Separate the feature values from the class. This is necceary because scikit-learn requires that features and class are separated before parsing them to the classifiers.
 
+# X for features
+# y for the label
+
 X=dataframe.iloc[:,0:-1]
 y=dataframe.iloc[:,-1]
 
