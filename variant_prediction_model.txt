@@ -1,0 +1,312 @@
+# Step 1: Data Collection and Preprocessing
+
+# Extract variant data from multiple sources and merge into a unified dataset.
+
+import pandas as pd
+
+# Load datasets
+clinvar_df = pd.read_csv("clinvar_variants.csv")  # ClinVar annotated dataset
+gnomad_df = pd.read_csv("gnomad_frequencies.csv")  # Allele frequencies
+spliceai_df = pd.read_csv("spliceai_predictions.csv")  # Splicing effects
+
+# Merge datasets on variant ID
+df = clinvar_df.merge(gnomad_df, on="variant_id", how="left").merge(spliceai_df, on="variant_id", how="left")
+
+# Drop unnecessary columns
+df = df[['variant_id', 'variant_type', 'phyloP', 'gnomAD_AF', 'spliceAI', 'CADD', 'ClinVar_label']]
+
+
+
+###### Preprocessing Tasks:
+
+## Handle missing values
+
+## Convert categorical variables (variant type) into numerical form
+
+## Scale continuous features (PhyloP, gnomAD_AF)
+
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+# Encode labels (Benign → 0, Pathogenic → 1)
+le = LabelEncoder()
+df["ClinVar_label"] = le.fit_transform(df["ClinVar_label"])
+
+# Standardize numerical features
+scaler = StandardScaler()
+df[["phyloP", "gnomAD_AF", "CADD"]] = scaler.fit_transform(df[["phyloP", "gnomAD_AF", "CADD"]])
+
+
+
+
+# Step 2: Feature Engineering & Annotation (Bash Script)
+# (i) Add external biological annotations using ANNOVAR, VEP, and in-house scripts.
+
+# Example: Running ANNOVAR to annotate variants:
+
+table_annovar.pl input_variants.avinput humandb/ -buildver hg19 \
+-out annotated_variants -remove -protocol refGene,cytoBand,gnomAD \
+-operation g,r,f -nastring . -csvout
+
+# (ii) Integrate new annotations into the dataset (Python)
+
+# Load ANNOVAR results
+annovar_df = pd.read_csv("annotated_variants.csv")
+
+# Merge annotations
+df = df.merge(annovar_df[['variant_id', 'gene_name', 'exonic_function']], on="variant_id", how="left")
+
+
+#####New Features Added:
+
+### Gene function
+
+### Protein domain effects
+
+### Regulatory region impacts
+
+
+#### Step 3: Model Selection & Hyperparameter Optimization
+## Split dataset and test multiple ML algorithms to find the best one.
+from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score
+
+# Split dataset
+X = df.drop(columns=["variant_id", "ClinVar_label"])
+y = df["ClinVar_label"]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train XGBoost model
+model = XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1)
+model.fit(X_train, y_train)
+
+# Evaluate performance
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.3f}")
+
+
+######## Find the Best Parameters with GridSearchCV
+
+from sklearn.model_selection import GridSearchCV
+
+params = {
+    "n_estimators": [100, 200, 300],
+    "max_depth": [3, 5, 7],
+    "learning_rate": [0.01, 0.1, 0.2]
+}
+
+grid_search = GridSearchCV(XGBClassifier(), param_grid=params, scoring="accuracy", cv=5)
+grid_search.fit(X_train, y_train)
+
+print("Best Hyperparameters:", grid_search.best_params_)
+
+
+######## Step 5: Deploy as an API for Clinical Use
+### Convert the trained model into a REST API using FastAPI.
+
+from fastapi import FastAPI
+import pickle
+import pandas as pd
+
+app = FastAPI()
+
+# Load trained model
+model = pickle.load(open("variant_classifier.pkl", "rb"))
+
+@app.post("/predict/")
+def predict_variant(data: dict):
+    df = pd.DataFrame([data])
+    prediction = model.predict(df)
+    return {"prediction": int(prediction[0])}
+
+
+ Step 6: Automate with Snakemake/Nextflow
+
+
+
+
+
+
+
+
+
+Nextflow Pipeline Overview
+We will define a Nextflow pipeline (main.nf) to automate:
+
+Variant Annotation (ANNOVAR, VEP)
+
+Data Preprocessing (Merging & Cleaning)
+
+Model Training & Hyperparameter Optimization (XGBoost)
+
+Model Deployment as API (FastAPI)
+
+
+
+## Step 1: Define Nextflow Workflow (main.nf)
+
+nextflow.enable.dsl=2
+
+workflow {
+    annotate_variants()
+    preprocess_data()
+    train_model()
+    deploy_api()
+}
+
+process annotate_variants {
+    input:
+        path input_variants
+
+    output:
+        path "annotated_variants.csv"
+
+    script:
+        """
+        table_annovar.pl ${input_variants} humandb/ -buildver hg19 \\
+        -out annotated_variants -remove -protocol refGene,cytoBand,gnomAD \\
+        -operation g,r,f -nastring . -csvout
+        """
+}
+
+process preprocess_data {
+    input:
+        path "annotated_variants.csv"
+
+    output:
+        path "processed_data.csv"
+
+    script:
+        """
+        python scripts/preprocess_data.py annotated_variants.csv processed_data.csv
+        """
+}
+
+process train_model {
+    input:
+        path "processed_data.csv"
+
+    output:
+        path "variant_classifier.pkl"
+
+    script:
+        """
+        python scripts/train_model.py processed_data.csv variant_classifier.pkl
+        """
+}
+
+process deploy_api {
+    input:
+        path "variant_classifier.pkl"
+
+    output:
+        path "deployed_model/"
+
+    script:
+        """
+        python scripts/deploy_api.py variant_classifier.pkl deployed_model/
+        """
+}
+
+
+
+## Step 2: Define Configuration File (nextflow.config)
+
+## This file defines compute resources, including Docker/Singularity containers or cloud environment
+
+profiles {
+    standard {
+        process.executor = 'local'
+    }
+
+    cluster {
+        process.executor = 'slurm'
+        process.queue = 'long'
+    }
+
+    docker {
+        process.container = 'my_docker_image'
+        docker.enabled = true
+    }
+}
+
+
+## Step 3: Create Python Scripts for Each Step
+
+# 1. preprocess_data.py (Cleaning & Merging Data)
+
+import pandas as pd
+import sys
+
+# Load annotated data
+df = pd.read_csv(sys.argv[1])
+
+# Drop unnecessary columns
+df = df[['variant_id', 'variant_type', 'phyloP', 'gnomAD_AF', 'spliceAI', 'CADD', 'ClinVar_label']]
+
+# Handle missing values
+df.fillna(df.median(), inplace=True)
+
+# Save processed data
+df.to_csv(sys.argv[2], index=False)
+
+
+# 2. train_model.py (Train XGBoost Classifier)
+import pandas as pd
+import sys
+import pickle
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+
+# Load dataset
+df = pd.read_csv(sys.argv[1])
+X = df.drop(columns=["ClinVar_label"])
+y = df["ClinVar_label"]
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train XGBoost model
+model = XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.1)
+model.fit(X_train, y_train)
+
+# Save trained model
+pickle.dump(model, open(sys.argv[2], "wb"))
+
+
+# 3. deploy_api.py (Deploy Model as a Web API)
+
+from fastapi import FastAPI
+import pickle
+import pandas as pd
+import uvicorn
+import sys
+
+# Load trained model
+model = pickle.load(open(sys.argv[1], "rb"))
+
+app = FastAPI()
+
+@app.post("/predict/")
+def predict_variant(data: dict):
+    df = pd.DataFrame([data])
+    prediction = model.predict(df)
+    return {"prediction": int(prediction[0])}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# Running the Workflow
+# Once everything is set up, run (in bash script):
+
+nextflow run main.nf -profile standard
+
+To run on an HPC cluster (Slurm):
+nextflow run main.nf -profile cluster
+
+To run with Docker
+nextflow run main.nf -profile docker
