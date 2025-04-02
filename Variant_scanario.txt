@@ -1,0 +1,19 @@
+Scenario: Genetic Variant Classification in Clinical Bioinformatics
+
+Objective: Classify genetic variants as Pathogenic (P), Likely Pathogenic (LP), Variant of Uncertain Significance (VUS), Likely Benign (LB), or Benign (B).
+
+Dataset: Use real-world sources such as ClinVar, gnomAD, HGMD, COSMIC to train the model.
+
+Features (Predictors):
+
+- Variant Type (Missense, Nonsense, Splice-site, Indel)
+
+- Conservation Scores (PhyloP, PhastCons)
+
+ - Allele Frequency (gnomAD, ExAC)
+
+ - Protein Impact (PolyPhen, SIFT)
+
+ - Splice Effects (SpliceAI)
+
+ - Regulatory Region Effects (ENCODE, RegulomeDB)
