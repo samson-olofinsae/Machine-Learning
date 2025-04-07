@@ -35,7 +35,6 @@ df[["phyloP", "gnomAD_AF", "CADD"]] = scaler.fit_transform(df[["phyloP", "gnomAD
 
 
 
-
 # Step 2: Feature Engineering & Annotation (Bash Script)
 # (i) Add external biological annotations using ANNOVAR, VEP, and in-house scripts.
 
