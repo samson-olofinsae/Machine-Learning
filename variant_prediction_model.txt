@@ -59,7 +59,6 @@ df = df.merge(annovar_df[['variant_id', 'gene_name', 'exonic_function']], on="va
 
 ### Regulatory region impacts
 
-
 #### Step 3: Model Selection & Hyperparameter Optimization
 ## Split dataset and test multiple ML algorithms to find the best one.
 from sklearn.model_selection import train_test_split
