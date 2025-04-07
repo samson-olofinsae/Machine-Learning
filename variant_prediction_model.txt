@@ -96,7 +96,6 @@ grid_search.fit(X_train, y_train)
 
 print("Best Hyperparameters:", grid_search.best_params_)
 
-
 ######## Step 5: Deploy as an API for Clinical Use
 ### Convert the trained model into a REST API using FastAPI.
 
