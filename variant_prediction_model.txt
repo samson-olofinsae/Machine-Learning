@@ -118,7 +118,6 @@ def predict_variant(data: dict):
 
 
 
-
 Nextflow Pipeline Overview
 We will define a Nextflow pipeline (main.nf) to automate:
 
