@@ -192,7 +192,6 @@ process deploy_api {
 }
 
 
-
 ## Step 2: Define Configuration File (nextflow.config)
 
 ## This file defines compute resources, including Docker/Singularity containers or cloud environment
