@@ -232,7 +232,6 @@ df.fillna(df.median(), inplace=True)
 # Save processed data
 df.to_csv(sys.argv[2], index=False)
 
-
 # 2. train_model.py (Train XGBoost Classifier)
 import pandas as pd
 import sys
