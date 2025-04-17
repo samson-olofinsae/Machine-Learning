@@ -112,7 +112,6 @@ def predict_variant(data: dict):
     prediction = model.predict(df)
     return {"prediction": int(prediction[0])}
 
-
  Step 6: Automate with Snakemake/Nextflow
 
 Nextflow Pipeline Overview
