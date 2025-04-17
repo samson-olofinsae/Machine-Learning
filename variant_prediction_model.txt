@@ -115,7 +115,6 @@ def predict_variant(data: dict):
 
  Step 6: Automate with Snakemake/Nextflow
 
-
 Nextflow Pipeline Overview
 We will define a Nextflow pipeline (main.nf) to automate:
 
