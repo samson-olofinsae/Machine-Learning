@@ -254,7 +254,6 @@ model.fit(X_train, y_train)
 # Save trained model
 pickle.dump(model, open(sys.argv[2], "wb"))
 
-
 # 3. deploy_api.py (Deploy Model as a Web API)
 
 from fastapi import FastAPI
