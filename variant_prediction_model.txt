@@ -50,7 +50,7 @@ annovar_df = pd.read_csv("annotated_variants.csv")
 # Merge annotations
 df = df.merge(annovar_df[['variant_id', 'gene_name', 'exonic_function']], on="variant_id", how="left")
 
-#####New Features Added:
+########  New Features Added:
 
 ### Gene function
 
