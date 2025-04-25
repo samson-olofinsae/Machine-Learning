@@ -26,7 +26,6 @@ echo ${sample}_final_indel >> allfinalindel.txt
 done
 
 
-
 #Script2: Bash Script generating dNdScv mutation table
 
 #!/bin/bash --login
