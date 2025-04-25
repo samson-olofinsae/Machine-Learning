@@ -44,7 +44,6 @@ awk 'BEGIN {print "SampleID chr pos ref mut"}{print $0}' combined.txt  > dndscv_
 
 mv dndscv_mutation.txt dNdScv_output
 
-
 Script3: R Script genenating driver genes from dndscv_mutation.txt
 
 library (dndscv)
