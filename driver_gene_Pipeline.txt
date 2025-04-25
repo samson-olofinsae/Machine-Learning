@@ -60,7 +60,6 @@ print(dndsout$nbreg$theta)
 signif_genes_localmodel = as.vector(dndsout$sel_loc$gene_name[dndsout$sel_loc$qall_loc<0.1])
 print(signif_genes_localmodel)
 
-
 Script4: Bash Script executing R Script3
 #!/bin/bash --login
 #$ -cwd
