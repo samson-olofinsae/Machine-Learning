@@ -144,7 +144,6 @@ for folder in allsamplefolders:
             allinfo.append(items)
 
             continue
-
    
     #if clonality_value>1.05:
     #    clonality_label='superclonal'
