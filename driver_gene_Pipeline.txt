@@ -83,7 +83,6 @@ dpoutput="/path_to_dpclust_output/dpcluster2"
 dndscvfile="/path_to_dNdScv_output_file/dNdScv_file.csv"
 #dndscvfile="exp.csv"
 
-
 #get sample ids
 
 df=pd.read_csv(dndscvfile)
