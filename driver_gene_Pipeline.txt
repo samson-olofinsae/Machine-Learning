@@ -104,8 +104,7 @@ for folder in allsamplefolders:
     except:
         errors.append('%s-output files do not exist'%folder)
         print('output file not not exist:%s',folder)
-        continue
-   
+        continue   
    
 
          
