@@ -167,8 +167,7 @@ newdf.to_csv('final.csv',index=False)
 
 
 with open('errors.txt','w') as errorout:
-    errorout.write('\n'.join(errors))
-    
+    errorout.write('\n'.join(errors))    
 
 #Script 6: R Script plotting chats for functional annotation of driver mutation 
 
