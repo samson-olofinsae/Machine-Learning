@@ -160,7 +160,6 @@ for folder in allsamplefolders:
         print(items)
 
 
-
 cols=df.columns
 newcols=np.append(cols,['SampleID','CHR','POS','START','END','CLUSTER','CLONALITY_SCORE','CLONALITY_LABEL','NO.OF.MUTATIONS'],axis=0)
 newdf=pd.DataFrame(allinfo,columns=newcols)
