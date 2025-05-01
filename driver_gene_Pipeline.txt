@@ -117,7 +117,6 @@ for folder in allsamplefolders:
         errors.append('%s-output files do not exist'%name)
         print('output file not not exist:%s',name)
         continue
-
                          
     info=df[df['SampleID']==name1].values[0]
     subset=df[df['SampleID']==name1]
