@@ -105,7 +105,6 @@ for folder in allsamplefolders:
         errors.append('%s-output files do not exist'%folder)
         print('output file not not exist:%s',folder)
         continue      
-
          
     DBCLUST_CLONALITY_FILE="%s/%s_%s_2000iters_1000burnin_bestClusterInfo.txt"%(folder,name1,name2)
     DPCLUST_VARIANT_FILE = "%s/%s_%s_2000iters_1000burnin_bestConsensusAssignments.bed"%(folder,name1,name2)
