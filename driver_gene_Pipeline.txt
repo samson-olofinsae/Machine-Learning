@@ -163,7 +163,6 @@ newcols=np.append(cols,['SampleID','CHR','POS','START','END','CLUSTER','CLONALIT
 newdf=pd.DataFrame(allinfo,columns=newcols)
 newdf.to_csv('final.csv',index=False)
 
-
 with open('errors.txt','w') as errorout:
     errorout.write('\n'.join(errors))    
 
