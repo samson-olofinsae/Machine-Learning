@@ -188,5 +188,4 @@ Clonality_data <- Drivers_gene %>%
  ggplot(Clonality_data,aes(x = Sign_genes, fill = impact)) + geom_bar()  + coord_flip()
 
  dev.off()
-
  # programme exited
