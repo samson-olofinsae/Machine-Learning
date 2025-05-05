@@ -131,7 +131,6 @@ for folder in allsamplefolders:
             clusterval=clusterdf[ (clusterdf['chr']==chr_) & (clusterdf['start']==start) & (clusterdf['end']==end)].values[0][3]
        
             print(clusterval)
-
             clonality_value=clonalitydf[clonalitydf['cluster.no']==clusterval]['location'].values[0]
             no_of_mutations=clonalitydf[clonalitydf['cluster.no']==clusterval]['no.of.mutations'].values[0]
             print(clonality_value)
