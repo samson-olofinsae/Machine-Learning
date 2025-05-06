@@ -279,7 +279,6 @@ if __name__ == "__main__":
 # Once everything is set up, run (in bash script):
 
 nextflow run main.nf -profile standard
-
 To run on an HPC cluster (Slurm):
 nextflow run main.nf -profile cluster
 
