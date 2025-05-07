@@ -280,5 +280,5 @@ nextflow run main.nf -profile standard
 To run on an HPC cluster (Slurm):
 nextflow run main.nf -profile cluster
 
-To run with Docker
+How to run with Docker
 nextflow run main.nf -profile docker
