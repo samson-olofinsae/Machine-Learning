@@ -3,7 +3,6 @@
 
 # Extract variant data from multiple sources and merge into a unified dataset.
 
-
 import pandas as pd
 
 # Load datasets
