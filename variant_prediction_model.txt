@@ -12,7 +12,7 @@ spliceai_df = pd.read_csv("spliceai_predictions.csv")  # Splicing effects
 # Merge datasets on variant ID
 df = clinvar_df.merge(gnomad_df, on="variant_id", how="left").merge(spliceai_df, on="variant_id", how="left")
 
-# Drop unnecessary columns
+# Droping unnecessary columns
 df = df[['variant_id', 'variant_type', 'phyloP', 'gnomAD_AF', 'spliceAI', 'CADD', 'ClinVar_label']]
 
 ############ Preprocessing Tasks:
