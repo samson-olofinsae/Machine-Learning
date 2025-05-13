@@ -93,7 +93,6 @@ df3.to_csv('bioactivity_preprocessed_data.csv', index=False)
 
 # inspect the content of the directory
 ! ls - l
-
 # copy the pre-processed file into Google Drive
 ! cp bioactivity_preprocessed_data.csv "/content/gdrive/My Drive/Colab Notebooks/data"
 
