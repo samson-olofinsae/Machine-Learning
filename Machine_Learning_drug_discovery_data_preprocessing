@@ -10,7 +10,6 @@ from google.colab import drive
 
 #STAGE2: Search for Target protein ('TARG')
 
-
 # download the Bioactivity data for RIPK2 (Target 'TARG') (or a protein implicated in disease progression)
 target = new_client.target
 target_query = target.search('TARG')
