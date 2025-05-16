@@ -11,7 +11,6 @@ from sklearn.ensemble import RandomForestRegressor
 # load the dataset generated from Script 3
 ! wget https: // https://raw.githubusercontent.com/samson-olofinsae/Mars/main/acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv
 
-
 df = pd.read_csv(
     'acetylcholinesterase_06_bioactivity_data_3class_pIC50_pubchem_fp.csv')
 # imputing the features
