@@ -41,7 +41,6 @@ model = RandomForestRegressor(n_estimators=100)
 model.fit(X_train, Y_train)
 r2 = model.score(X_test, Y_test)
 r2
-
 Y_pred = model.predict(X_test)
 
 # STAGE6: Scatter Plot of Experimental vs Predicted pIC50 Values
