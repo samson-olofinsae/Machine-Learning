@@ -20,7 +20,6 @@ df3_selection.to_csv('molecule.smi', sep='\t', index=False, header=False)
 ! cat molecule.smi | head - 5
 ! cat molecule.smi | wc - l
 
-
 # Calculate fingerprint descriptors
 # calculating the PaDEL descripors
 ! bash padel.sh
