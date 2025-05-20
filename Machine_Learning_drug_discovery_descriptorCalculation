@@ -9,7 +9,6 @@ import pandas as pd
 # load bioactivity data generated from project
 ! wget https: // https://raw.githubusercontent.com/samson-olofinsae/Mars/main/acetylcholinesterase_04_bioactivity_data_3class_pIC50.csv
 
-
 df3 = pd.read_csv('acetylcholinesterase_04_bioactivity_data_3class_pIC50.csv')
 df3
 
