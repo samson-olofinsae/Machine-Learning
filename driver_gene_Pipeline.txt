@@ -125,7 +125,6 @@ for folder in allsamplefolders:
         print(chr_,start,end)
 
         #search for assigned cluster
-
         try:
             clusterval=clusterdf[ (clusterdf['chr']==chr_) & (clusterdf['start']==start) & (clusterdf['end']==end)].values[0][3]
        
