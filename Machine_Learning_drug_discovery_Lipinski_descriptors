@@ -29,7 +29,6 @@ from rdkit.Chem import Descriptors, Lipinski
 
 # create the lipinski function, inspired by the link https://codeocean.com/explore/capsules?query=tag:data-curation
 
-
 def lipinski(smiles, verbose=False):
 
     moldata = []
