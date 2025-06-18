@@ -15,7 +15,7 @@ df = clinvar_df.merge(gnomad_df, on="variant_id", how="left").merge(spliceai_df,
 # Droping unnecessary columns
 df = df[['variant_id', 'variant_type', 'phyloP', 'gnomAD_AF', 'spliceAI', 'CADD', 'ClinVar_label']]
 
-############ Preprocessing Tasks:
+########## Preprocessing Tasks:
 
 ## Handle missing values
 
