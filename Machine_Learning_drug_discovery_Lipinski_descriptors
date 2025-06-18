@@ -7,7 +7,6 @@
 sys.path.append('/usr/local/lib/python3.7/site-packages/')
 
 
-
 # load bioactivity data into df
 import pandas as pd
 df = pd.read_csv('bioactivity_preprocessed_data.csv')
