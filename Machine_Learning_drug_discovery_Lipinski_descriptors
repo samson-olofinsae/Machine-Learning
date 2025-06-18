@@ -16,7 +16,6 @@ df.head(3)
 
 #STAGE2: Compute the Lipinski Descriptors
 
-
 #import libraries
 
 import numpy as np
